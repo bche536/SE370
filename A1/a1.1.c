@@ -16,6 +16,7 @@
 #include <sys/resource.h>
 #include <stdbool.h>
 #include <sys/times.h>
+#include <pthread.h>
 
 #define SIZE    10
 
@@ -31,38 +32,40 @@ void print_data(struct block my_data) {
 }
 
 /* Split the shared array around the pivot, return pivot index. */
-int split_on_pivot(struct block my_data) {
-    int right = my_data.size - 1;
+int split_on_pivot(struct block* my_data) {
+    int right = my_data -> size - 1;
     int left = 0;
-    int pivot = my_data.data[right];
+    int pivot = my_data -> data[right];
     while (left < right) {
-        int value = my_data.data[right - 1];
+        int value = my_data -> data[right - 1];
         if (value > pivot) {
-            my_data.data[right--] = value;
+            my_data -> data[right--] = value;
         } else {
-            my_data.data[right - 1] = my_data.data[left];
-            my_data.data[left++] = value;
+            my_data -> data[right - 1] = my_data -> data[left];
+            my_data -> data[left++] = value;
         }
     }
-    my_data.data[right] = pivot;
+    my_data -> data[right] = pivot;
     return right;
 }
 
 /* Quick sort the data. */
-void quick_sort(struct block my_data) {
-    if (my_data.size < 2)
-        return;
+void *quick_sort(void *data) {
+    struct block *my_data = (struct block*) data;
+    
+    if (my_data -> size < 2)
+        return NULL;
     int pivot_pos = split_on_pivot(my_data);
 
     struct block left_side, right_side;
 
     left_side.size = pivot_pos;
-    left_side.data = my_data.data;
-    right_side.size = my_data.size - pivot_pos - 1;
-    right_side.data = my_data.data + pivot_pos + 1;
+    left_side.data = my_data -> data;
+    right_side.size = my_data -> size - pivot_pos - 1;
+    right_side.data = my_data -> data + pivot_pos + 1;
 
-    quick_sort(left_side);
-    quick_sort(right_side);
+    quick_sort(&left_side);
+    quick_sort(&right_side);
 }
 
 /* Check to see if the data is sorted. */
@@ -86,6 +89,8 @@ void produce_random_data(struct block my_data) {
 int main(int argc, char *argv[]) {
 	long size;
 
+    pthread_t t1;
+
 	if (argc < 2) {
 		size = SIZE;
 	} else {
@@ -104,10 +109,28 @@ int main(int argc, char *argv[]) {
     if (start_block.size < 1001)
         print_data(start_block);
 
+    struct block* temp = &start_block;
+
+    // Split the arrays to put them on seperate threads
+    int pivot_pos = split_on_pivot(temp);
+
+    struct block left_side, right_side;
+
+    left_side.size = pivot_pos;
+    left_side.data = start_block.data;
+    right_side.size  = start_block.size - pivot_pos - 1;
+    right_side.data = start_block.data + pivot_pos + 1;
+
+
     struct tms start_times, finish_times;
     times(&start_times);
     printf("start time in clock ticks: %ld\n", start_times.tms_utime);
-    quick_sort(start_block);
+
+    // Create thread, pass through function and parameters
+    pthread_create(&t1, NULL, quick_sort, &right_side);
+    quick_sort(&left_side);
+    pthread_join(t1, NULL);
+
     times(&finish_times);
     printf("finish time in clock ticks: %ld\n", finish_times.tms_utime);
 
