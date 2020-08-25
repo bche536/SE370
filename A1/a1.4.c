@@ -134,11 +134,13 @@ int main(int argc, char *argv[]) {
     printf("start time in clock ticks: %ld\n", start_times.tms_utime);
 
     int cpid = fork();
+    
     if(cpid == -1) {
         perror("Creating child");
         exit(EXIT_FAILURE);
     }
     if(cpid != 0) {
+        // Parent does this
         quick_sort(&right_side);
         for(int i = 0; i < left_side.size; i++) {
             if(read(my_pipe[0], &left_side.data[i], sizeof(int)) < 0) {
@@ -155,9 +157,10 @@ int main(int argc, char *argv[]) {
         printf(is_sorted(start_block) ? "sorted\n" : "not sorted\n");
         free(start_block.data);
         exit(EXIT_SUCCESS);
-        
+
     }
     else {
+        // Child does this
         close(my_pipe[0]);
         quick_sort(&left_side);
         for(int i = 0; i < left_side.size; i++) {
@@ -168,8 +171,5 @@ int main(int argc, char *argv[]) {
         }
         close(my_pipe[1]);
     }
-    
-    
-
 
 }

@@ -73,10 +73,12 @@ void quick_sort(struct block my_data) {
             exit(EXIT_FAILURE);
         }
         if(cpid != 0) {
+            // Parent does this
             quick_sort(left_side);
             while(wait(NULL) > 0);
         }
         else {
+            // Child does this
             quick_sort(right_side);
             exit(EXIT_SUCCESS);
         }

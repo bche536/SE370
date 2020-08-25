@@ -80,6 +80,7 @@ void quick_sort(struct block my_data) {
             exit(EXIT_FAILURE);
         }
         if(cpid != 0) {
+            //Parent does this
             quick_sort(right_side);
             for(int i = 0; i < left_side.size; i++) {
                 if(read(my_pipe[0], &left_side.data[i], sizeof(int)) < 0) {
@@ -91,6 +92,7 @@ void quick_sort(struct block my_data) {
 
         }
         else {
+            // Child does this
             quick_sort(left_side);
             for(int i = 0; i < left_side.size; i++) {
                 if(write(my_pipe[1], &left_side.data[i], sizeof(int)) < 0) {
