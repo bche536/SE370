@@ -1,0 +1,175 @@
+SE370 Assignment 2
+
+Ben Chen Bche536
+
+Part 1)
+
+Q1)
+
+In the second terminal, we see two identical outputs which and we are shown that the files in the ‘mount’ directory have been replaced by the ones in the ‘source’ directory. This is due to passthrough.py allowing mount to mirror and act like the source folder as faithfully as possible. Passthrough.py allows this to happen due to symbolic links established between the ‘source‘ and ‘mount’ folders. Files only exist in the ‘source’ directory.
+
+Q2)
+
+“cd mount”
+DEBUG:fuse.log-mixin:-> getattr / (None,)
+DEBUG:fuse.log-mixin:<- getattr {'st_ctime': 1602426463.0, 'st_mtime': 1602426463.0, 'st_nlink': 2, 'st_mode': 16877, 'st_size': 2048, 'st_gid': 62215, 'st_uid': 2593082, 'st_atime': 1602426463.0}
+DEBUG:fuse.log-mixin:-> access / (1,)
+DEBUG:fuse.log-mixin:<- access None
+
+Answer: 
+getattr / (None, ): This method returns all the attributes associated with the given path or directory with “/”:
+access / (1,): This method checks the accessibility of the “/” path/directory. None returned means an ‘ok’ response.
+
+“cat > newfile”
+DEBUG:fuse.log-mixin:-> getattr / (None,)
+DEBUG:fuse.log-mixin:<- getattr {'st_ctime': 1602492519.0, 'st_mtime': 1602492519.0, 'st_nlink': 2, 'st_mode': 16877, 'st_size': 2048, 'st_gid': 62215, 'st_uid': 2593082, 'st_atime': 1602492519.0}
+DEBUG:fuse.log-mixin:-> access / (1,)
+DEBUG:fuse.log-mixin:<- access None
+DEBUG:fuse.log-mixin:-> getattr /newfile (None,)
+DEBUG:fuse.log-mixin:<- getattr "[Errno 2] No such file or directory: 'source/newfile'"
+DEBUG:fuse:FUSE operation getattr raised a <type 'exceptions.OSError'>, returning errno 2.
+Traceback (most recent call last):
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 731, in _wrapper
+    return func(*args, **kwargs) or 0
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 771, in getattr
+    return self.fgetattr(path, buf, None)
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 1024, in fgetattr
+    attrs = self.operations('getattr', self._decode_optional_path(path), fh)
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 1240, in call
+    ret = getattr(self, op)(path, *args)
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/passthrough.py", line 43, in getattr
+    st = os.lstat(full_path)
+OSError: [Errno 2] No such file or directory: 'source/newfile'
+DEBUG:fuse.log-mixin:-> create /newfile (33188L,)
+DEBUG:fuse.log-mixin:<- create 4
+DEBUG:fuse.log-mixin:-> getattr /newfile (4L,)
+DEBUG:fuse.log-mixin:<- getattr {'st_ctime': 1602492545.0, 'st_mtime': 1602492545.0, 'st_nlink': 1, 'st_mode': 33188, 'st_size': 0, 'st_gid': 62215, 'st_uid': 2593082, 'st_atime': 1602492545.0}
+DEBUG:fuse.log-mixin:-> flush /newfile (4L,)
+DEBUG:fuse.log-mixin:<- flush None
+
+Answer:
+getattr / (None, ): This method returns all the attributes associated with the given path/directory “/”.
+access / (1,): This method checks the accessibility of the “/” path/directory. None returned means an ‘ok’ response.
+getattr / newfile (None,): Checks the access for a file with ‘newfile’ then returned an error as no such file exists.
+create /newfile(33188, ): Creates a new file named ‘newfile’ and returns file id of 4.
+ getattr /newfile(4L, ): Returns all the attributes associated with given path “/newfile”.
+flush /newfile (4L, ): Flushes the internal buffer in “/newfile”.
+
+“hello world”
+DEBUG:fuse.log-mixin:-> getxattr /newfile (u'security.capability',)
+DEBUG:fuse.log-mixin:<- getxattr '[Errno 95] Operation not supported'
+DEBUG:fuse:FUSE operation getxattr raised a <class 'fuse.FuseOSError'>, returning errno 95.
+Traceback (most recent call last):
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 731, in _wrapper
+    return func(*args, **kwargs) or 0
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 907, in getxattr
+    name.decode(self.encoding), *args)
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 1240, in call
+    ret = getattr(self, op)(path, *args)
+  File "/afs/ec.auckland.ac.nz/users/b/c/bche536/unixhome/Desktop/SE370/A2/fuse.py", line 1124, in getxattr
+    raise FuseOSError(ENOTSUP)
+FuseOSError: [Errno 95] Operation not supported
+DEBUG:fuse.log-mixin:-> write /newfile ('hello world\n', 0, 4L)
+DEBUG:fuse.log-mixin:<- write 12
+
+Answer:
+getxattr /newfile: Method ignored (refer to Piazza)
+write /newfile (‘hello world\n’, 0, 4L): Writes “hello world\n” to “/newfile” and then returns the number of bytes – being 12bytes.
+
+“^D”
+DEBUG:fuse.log-mixin:-> flush /newfile (4L,)
+DEBUG:fuse.log-mixin:<- flush None
+DEBUG:fuse.log-mixin:-> release /newfile (4L,)
+DEBUG:fuse.log-mixin:<- release None
+
+Answer:
+flush /newfile (4L, ): Flushes the internal buffer in “/newfile”.
+release /newfile: Closes “/newfile” so it no longer refers to anything.
+
+
+ “cd ../”
+DEBUG:fuse.log-mixin:-> getattr / (None,)
+DEBUG:fuse.log-mixin:<- getattr {'st_ctime': 1602492545.0, 'st_mtime': 1602492545.0, 'st_nlink': 2, 'st_mode': 16877, 'st_size': 2048, 'st_gid': 62215, 'st_uid': 2593082, 'st_atime': 1602492545.0}
+
+Answer:
+getattr / (None, ): This method returns all the attributes associated with the given path/directory “/”.
+
+“fusermount  -u mount”
+DEBUG:fuse.log-mixin:-> destroy / ()
+DEBUG:fuse.log-mixin:<- destroy None
+Answer:
+destroy / (): Unmounts the resource.
+
+Part 2)
+
+Q3)
+
+__init__: Constructor for the new file system
+def init(self):
+        self.files = {} 
+// Generates an empty dictionary called self.files and will have path name as keys and the values in the dictionary are another dictionary.
+        self.data = defaultdict(bytes)
+// Self.data is the dictionary for the file data and will have path name as keys and the values are the file data.
+        self.fd = 0
+// Sets the start value for the file descriptors, these are the unique file identifiers.
+        now = time()
+//  Gets the current time
+        self.files['/'] = dict(st_mode=(S_IFDIR | 0o755), st_ctime=now,
+                               st_mtime=now, st_atime=now, st_nlink=2)
+// Sets the file attributes for the root of the file system. It is a directory with creation, modified, and accessed time set to the time gotten earlier and has two links.
+
+getattr: Gets the file attributes
+def getattr(self, path, fh=none):
+// Gets the file attributes for any file in the memory file system
+       if path not in self.files:
+             raise FuseOSError(ENOENT)
+
+             return self.files[path]
+// If the path is not in the memory file system, return/raise an error
+
+readdir: Gets the file names in the directory specified
+def readdir(self, path, fh):
+       return [ ‘ . ’,  ‘ . . ’ ] + [x[1:] for x in self.files if x != ‘/’ ]
+// Returns a list with the current, and parent directory and all files in the directory minus the leading “/”
+
+open: Opens a file
+def open(self, path, flags):
+       self.fd += 1
+       return self.fd
+// Creates a unique identifier for the file and returns it.
+
+create: Creates a new file with specified path with the given mode
+def create(self, path, mode): 
+          self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
+                                                    st_size=0, st_ctime=time(), st_mtime=time(),
+                                                    st_atime=time())
+// The self.files dictionary with specified path gets created with a dictionary with the times, links counts, size and mode all set.
+          self.fd += 1
+// Increments the file descriptor number
+          return self.fd
+// Returns the file descriptor number
+unlink: Unlink/removes a file 
+def unlink(self, path):
+          self.files.pop(path)
+// Removes the file with the specified path from the files dictionary
+
+read: Reads size data from the specified path starting at a specified offset
+def read(self, path, size, offset, fh):
+       return self.data[path][offset:offset + size]
+// Gets the data using the specified path as the key and returns the section of the file starting at the offset and ending at the offset plus size bytes specified (characters).
+
+write: Writes data to the specified file path at the specified offset
+def write(self, path, data, offset, fh):
+       self.data[path] = self.data[path][:offset] + data
+// Gets the data from the file using the specified path as the key then appends the new data onto the file data extracting the file data from the start up to the specified offset
+       self.files[path]['st_size'] = len(self.data[path])
+// Updates the file size
+       return len(data)
+// Returns the number of bytes written to the file (characters)
+
+
+
+
+
+
+
